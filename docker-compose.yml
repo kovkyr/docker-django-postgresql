@@ -1,0 +1,33 @@
+version: '2'
+services:
+    python:
+        build:
+            context: ./
+            dockerfile: ./.docker/build-python/Dockerfile
+        restart: always
+        tty: true
+        ports:
+            - "3000:80"
+            - "3001:443"
+        env_file:
+            - ./.env
+        volumes:
+            - "./app/:/app"
+        command: python3 /app/manage.py runserver 0.0.0.0:80
+    psql:
+        image: postgres:12
+        restart: always
+        ports:
+            - "5432:5432"
+        volumes:
+            - ".docker/conf/psql/:/docker-entrypoint-initdb.d/"
+            - "./data/postgresql-data:/var/lib/postgresql/data"
+        environment:
+            - POSTGRES_DB=${DB_NAME}
+            - POSTGRES_USER=${DB_USER}
+            - POSTGRES_PASSWORD=${DB_PASSWORD}
+        healthcheck:
+            test: ["CMD", "pg_isready"]
+            interval: 3s
+            timeout: 5s
+            retries: 5
